@@ -1,0 +1,12 @@
+name: "realtime_events"
+version: "1.0.0"
+config-version: 2
+
+profile: "realtime_events"
+
+model-paths: ["models"]
+
+models:
+  realtime_events:
+    marts:
+      +materialized: table

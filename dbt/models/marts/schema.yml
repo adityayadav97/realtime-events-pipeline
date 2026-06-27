@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: fct_hourly_events
+    description: "Hourly event facts with conversion-rate KPI."
+    columns:
+      - name: event_hour
+        tests: [not_null, unique]
+      - name: conversion_rate_pct
+        tests: [not_null]

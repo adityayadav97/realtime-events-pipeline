@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+lakehouse/
+checkpoints/
+spark-warehouse/
+metastore_db/
+derby.log
+dbt/target/
+dbt/logs/
+logs/
+.DS_Store
+.idea/
+.vscode/
