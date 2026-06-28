@@ -1,4 +1,9 @@
-"""Kafka producer that simulates a real-time clickstream of user events."""
+"""Kafka producer that simulates a real-time clickstream of user events.
+
+Default throughput is 200 events/sec (\u2248 12,000 events/min) so the streaming
+consumer is exercised at a realistic 10K+ events/min rate. Override with --rate
+for a lighter local run, e.g. `python -m src.producer.event_producer --rate 50`.
+"""
 
 from __future__ import annotations
 import argparse
@@ -30,8 +35,13 @@ def main(rate: int):
     producer = KafkaProducer(
         bootstrap_servers=KAFKA_BOOTSTRAP,
         value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+        linger_ms=20,
+        batch_size=64 * 1024,
     )
-    print(f"🚀 Producing ~{rate} events/sec to topic '{KAFKA_TOPIC}' ... Ctrl+C to stop")
+    print(
+        f"\U0001F680 Producing ~{rate} events/sec (\u2248 {rate * 60:,} events/min) "
+        f"to topic '{KAFKA_TOPIC}' ... Ctrl+C to stop"
+    )
     sent = 0
     try:
         while True:
@@ -42,12 +52,12 @@ def main(rate: int):
             producer.flush()
             time.sleep(1)
     except KeyboardInterrupt:
-        print(f"\n🛑 stopped. total sent = {sent:,}")
+        print(f"\n\U0001F6D1 stopped. total sent = {sent:,}")
     finally:
         producer.close()
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--rate", type=int, default=50, help="events per second")
+    ap.add_argument("--rate", type=int, default=200, help="events per second (default 200 \u2248 12K/min)")
     main(ap.parse_args().rate)

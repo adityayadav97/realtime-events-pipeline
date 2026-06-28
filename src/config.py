@@ -15,7 +15,9 @@ EVENTS_RAW = str(LAKEHOUSE / "events_raw")
 EVENTS_HOURLY = str(LAKEHOUSE / "events_hourly")
 
 # Streaming tuning
-MAX_OFFSETS_PER_TRIGGER = 5000     # backpressure
+# Sized for 10K+ events/min sustained throughput with sub-minute micro-batches.
+MAX_OFFSETS_PER_TRIGGER = 20000    # backpressure / bounded micro-batch
+TRIGGER_INTERVAL = "30 seconds"    # micro-batch cadence (sub-minute latency)
 WATERMARK_DELAY = "10 minutes"     # late-data tolerance
 
 EVENT_TYPES = ["page_view", "add_to_cart", "purchase", "search", "login", "logout"]
