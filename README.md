@@ -1,79 +1,120 @@
-# \u26A1 Real-Time Events Pipeline
+<div align="center">
 
-> A streaming data pipeline that ingests **10K+ clickstream events/min** from **Apache Kafka**, processes them in real time with **Spark Structured Streaming**, lands them in **Delta Lake** (exactly-once), and serves hourly analytics marts via **dbt** \u2014 all orchestrated and monitored with **Apache Airflow**, at **sub-minute event-to-insight latency**.
+# ⚡ Real-Time Events Pipeline
 
-`Python` \u00b7 `Apache Kafka` \u00b7 `Spark Streaming` \u00b7 `Delta Lake` \u00b7 `dbt` \u00b7 `Airflow` \u00b7 `MIT License`
+### Streaming data pipeline ingesting **10K+ clickstream events/min** via **Kafka → Spark Structured Streaming → Delta Lake** (exactly-once) with **dbt** marts — at **sub-minute event-to-insight latency**.
+
+<br/>
+
+![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Apache Kafka](https://img.shields.io/badge/Apache_Kafka-3.6-231F20?style=for-the-badge&logo=apachekafka&logoColor=white)
+![Spark Streaming](https://img.shields.io/badge/Spark_Structured_Streaming-3.5-E25A1C?style=for-the-badge&logo=apachespark&logoColor=white)
+![Delta Lake](https://img.shields.io/badge/Delta_Lake-Exactly--Once-003366?style=for-the-badge)
+![dbt](https://img.shields.io/badge/dbt-Marts-FF694B?style=for-the-badge&logo=dbt&logoColor=white)
+![Airflow](https://img.shields.io/badge/Apache_Airflow-2.8-017CEE?style=for-the-badge&logo=apacheairflow&logoColor=white)
+
+![Last Commit](https://img.shields.io/github/last-commit/adityayadav97/realtime-events-pipeline?style=flat-square&color=success)
+![Repo Size](https://img.shields.io/github/repo-size/adityayadav97/realtime-events-pipeline?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+![Built with ❤](https://img.shields.io/badge/Built%20with-%E2%9D%A4%20%26%20Kafka-red?style=flat-square)
+
+</div>
 
 ---
 
-## \U0001F4CC Why this project
+## 📑 Table of Contents
 
-Most data engineers can build batch pipelines \u2014 fewer can build **reliable streaming** ones. This project demonstrates real-time ingestion with **exactly-once semantics**, **checkpointing**, **watermarking** for late data, and **stateful aggregation** \u2014 the hard parts of streaming.
-
-It complements my batch project (retail-lakehouse-pipeline) to show the full data engineering spectrum.
+- [🎯 Overview](#-overview)
+- [⚙️ Scale & Performance](#️-scale--performance)
+- [🏗️ Architecture](#️-architecture)
+- [🧰 Tech Stack](#-tech-stack)
+- [🔑 Streaming Concepts](#-streaming-concepts-demonstrated)
+- [📂 Project Structure](#-project-structure)
+- [🚀 Quick Start](#-quick-start)
+- [💡 Key Engineering Decisions](#-key-engineering-decisions)
 
 ---
 
-## \u2699\uFE0F Scale & Performance
+## 🎯 Overview
+
+Most data engineers can build batch pipelines — fewer can build **reliable streaming** ones. This project demonstrates real-time ingestion with **exactly-once semantics**, **checkpointing**, **watermarking** for late data, and **stateful aggregation** — the genuinely hard parts of streaming.
+
+Events flow from a **Kafka** producer into **Spark Structured Streaming**, land in **Delta Lake** exactly-once, and are rolled up hourly into **dbt** marts — all orchestrated and monitored with **Apache Airflow**. It complements my batch project ([retail-lakehouse-pipeline](https://github.com/adityayadav97/retail-lakehouse-pipeline)) to show the full data-engineering spectrum.
+
+---
+
+## ⚙️ Scale & Performance
 
 | Aspect | Value |
-| --- | --- |
-| Ingest throughput | **10K+ events/min** (default 200 events/sec \u2248 12K/min) |
-| Latency | **Sub-minute** event-to-insight (30s micro-batch trigger) |
-| Delivery guarantee | **Exactly-once** (Delta sink + checkpointing) |
-| Late data | Tolerated up to 10 min via event-time watermarking |
-| Backpressure | Bounded micro-batches (`maxOffsetsPerTrigger = 20,000`) |
+| :--- | :--- |
+| 🚀 Ingest throughput | **10K+ events/min** (default 200 events/sec ≈ 12K/min) |
+| ⏱️ Latency | **Sub-minute** event-to-insight (30s micro-batch trigger) |
+| 🎯 Delivery guarantee | **Exactly-once** (Delta sink + checkpointing) |
+| 🕒 Late data | Tolerated up to 10 min via event-time watermarking |
+| 📦 Backpressure | Bounded micro-batches (`maxOffsetsPerTrigger = 20,000`) |
 
 ---
 
-## \U0001F3D7\uFE0F Architecture
+## 🏗️ Architecture
 
-```
-  Event Producer (Kafka topic: user_events)  \u2014 JSON @ 200/sec (\u2248 12K/min)
-            \u2502
-            \u25BC
-  Spark Structured Streaming  (parse, validate, dedupe, watermark)
-            \u2502  exactly-once (checkpoint + watermark)
-            \u25BC
-  Delta Lake  events_raw (append)
-            \u2502
-            \u25BC
-  Airflow: hourly rollup \u2192 Delta events_hourly \u2192 dbt marts \u2192 freshness check
+```mermaid
+flowchart LR
+    P[Event Producer<br/>Kafka topic: user_events] -->|JSON ~200/sec| S[Spark Structured Streaming<br/>parse · validate · watermark]
+    S -->|exactly-once<br/>checkpoint| D[Delta Lake<br/>events_raw]
+    D --> R[Airflow<br/>hourly rollup]
+    R --> H[Delta<br/>events_hourly]
+    H --> M[dbt marts<br/>fct_hourly_events]
 ```
 
 ---
 
-## \U0001F9F0 Tech Stack
+## 🧰 Tech Stack
 
-* **Streaming:** Apache Kafka 3.6, Spark Structured Streaming 3.5
-* **Storage:** Delta Lake (exactly-once sink, checkpointing)
-* **Late-data handling:** event-time watermarking + deduplication
-* **Batch + Modeling:** PySpark hourly rollup, dbt marts
-* **Orchestration:** Apache Airflow 2.8
-* **Local infra:** Docker Compose (Kafka + Zookeeper)
+| Category | Tools |
+| :--- | :--- |
+| **Streaming** | Apache Kafka 3.6, Spark Structured Streaming 3.5 |
+| **Storage** | Delta Lake (exactly-once sink, checkpointing) |
+| **Late-data handling** | Event-time watermarking + deduplication |
+| **Batch + Modeling** | PySpark hourly rollup, dbt marts |
+| **Orchestration** | Apache Airflow 2.8 |
+| **Local Infra** | Docker Compose (Kafka + Zookeeper) |
 
 ---
 
-## \U0001F4C2 Project Structure
+## 🔑 Streaming Concepts Demonstrated
+
+| Concept | How it's used |
+| :--- | :--- |
+| **Exactly-once** | Delta sink + Spark checkpointing guarantees no duplicates / no loss |
+| **Watermarking** | Late events tolerated up to 10 minutes via `withWatermark` |
+| **Deduplication** | `dropDuplicates` on `event_id` within the watermark window |
+| **Stateful aggregation** | Windowed event counts per event type |
+| **Schema enforcement** | Explicit schema applied to Kafka JSON payloads |
+| **Backpressure** | `maxOffsetsPerTrigger` bounds micro-batch size at 10K+/min |
+| **Sub-minute latency** | 30-second micro-batch trigger for near-real-time marts |
+
+---
+
+## 📂 Project Structure
 
 ```
 realtime-events-pipeline/
-\u251C\u2500\u2500 src/
-\u2502   \u251C\u2500\u2500 config.py
-\u2502   \u251C\u2500\u2500 producer/event_producer.py     # simulates 10K+ events/min into Kafka
-\u2502   \u251C\u2500\u2500 streaming/stream_consumer.py    # Spark Structured Streaming \u2192 Delta
-\u2502   \u2514\u2500\u2500 batch/hourly_rollup.py          # hourly aggregation \u2192 Delta
-\u251C\u2500\u2500 dags/streaming_monitor_dag.py       # Airflow: rollup + dbt + freshness check
-\u251C\u2500\u2500 dbt/models/marts/fct_hourly_events.sql
-\u251C\u2500\u2500 tests/test_event_schema.py
-\u251C\u2500\u2500 docker-compose.yml                  # Kafka + Zookeeper
-\u251C\u2500\u2500 requirements.txt
-\u2514\u2500\u2500 Makefile
+├── src/
+│   ├── config.py
+│   ├── producer/event_producer.py     # simulates 10K+ events/min into Kafka
+│   ├── streaming/stream_consumer.py    # Spark Structured Streaming → Delta
+│   └── batch/hourly_rollup.py          # hourly aggregation → Delta
+├── dags/streaming_monitor_dag.py       # Airflow: rollup + dbt + freshness check
+├── dbt/models/marts/fct_hourly_events.sql
+├── tests/test_event_schema.py
+├── docker-compose.yml                  # Kafka + Zookeeper
+├── requirements.txt
+└── Makefile
 ```
 
 ---
 
-## \U0001F680 Quick Start
+## 🚀 Quick Start
 
 ```bash
 git clone https://github.com/adityayadav97/realtime-events-pipeline.git
@@ -83,8 +124,8 @@ pip install -r requirements.txt
 # 1. Start Kafka locally
 docker compose up -d
 
-# 2. Start the event producer (terminal 1) \u2014 defaults to 10K+ events/min
-python -m src.producer.event_producer            # 200/sec \u2248 12K/min
+# 2. Start the event producer (terminal 1) — defaults to 10K+ events/min
+python -m src.producer.event_producer            # 200/sec ≈ 12K/min
 python -m src.producer.event_producer --rate 50  # lighter local run
 
 # 3. Start the streaming consumer (terminal 2)
@@ -97,36 +138,23 @@ cd dbt && dbt build --profiles-dir .
 
 ---
 
-## \U0001F511 Streaming Concepts Demonstrated
+## 💡 Key Engineering Decisions
 
-| Concept | How it's used |
-| --- | --- |
-| **Exactly-once** | Delta sink + Spark checkpointing guarantees no duplicates / no loss |
-| **Watermarking** | Late events tolerated up to 10 minutes via `withWatermark` |
-| **Deduplication** | `dropDuplicates` on event_id within the watermark window |
-| **Stateful aggregation** | Windowed event counts per event type |
-| **Schema enforcement** | Explicit schema applied to Kafka JSON payloads |
-| **Backpressure** | `maxOffsetsPerTrigger` to bound micro-batch size at 10K+/min |
-| **Sub-minute latency** | 30-second micro-batch trigger for near-real-time marts |
+- **Delta as the streaming sink** — gives ACID guarantees and exactly-once without extra infrastructure.
+- **Event-time over processing-time** — correct results even when events arrive out of order.
+- **Separation of stream + batch** — the stream lands raw events fast; batch rollups and dbt build analytics, keeping each layer simple and replayable.
+- **Bounded micro-batches** — `maxOffsetsPerTrigger` keeps latency predictable under bursty load.
 
 ---
 
-## \U0001F9EA Testing
+<div align="center">
 
-```bash
-pytest tests/ -v
-```
+### Built by **Aditya Yadav** — Data Engineer @ EPAM Systems
 
----
+[![Portfolio](https://img.shields.io/badge/Portfolio-adityayadav97.github.io-22d3ee?style=for-the-badge)](https://adityayadav97.github.io/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/theadityayadav)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/adityayadav97)
 
-## \U0001F4A1 Key Engineering Decisions
+<sub>📜 MIT License © Aditya Yadav · <i>"Anyone can build batch — I build streaming that doesn't lose data."</i></sub>
 
-* **Delta as the streaming sink** \u2014 gives ACID guarantees and exactly-once without extra infrastructure.
-* **Event-time over processing-time** \u2014 correct results even when events arrive out of order.
-* **Separation of stream + batch** \u2014 the stream lands raw events fast; batch rollups and dbt build analytics, keeping each layer simple and replayable.
-
----
-
-## \U0001F4DC License
-
-MIT \u00a9 Aditya Yadav
+</div>
